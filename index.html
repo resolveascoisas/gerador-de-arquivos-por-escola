@@ -13,7 +13,7 @@
             padding: 40px 20px;
         }
         .container {
-            max-width: 700px;
+            max-width: 750px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -28,6 +28,42 @@
             font-size: 1.6rem;
             text-align: center;
         }
+        /* Estilo da nova caixa de instruções */
+        .instructions-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 5px solid #f59e0b;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            color: #451a03;
+        }
+        .instructions-box h3 {
+            margin-top: 0;
+            color: #b45309;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .instructions-box ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        .instructions-box li {
+            margin-bottom: 8px;
+        }
+        .instructions-box code {
+            background-color: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #b45309;
+            font-size: 0.9em;
+        }
+        
         .step {
             margin-bottom: 25px;
             padding: 20px;
@@ -73,7 +109,7 @@
             height: 180px;
             overflow-y: auto;
             font-family: 'Consolas', monospace;
-            font-size: 12px;
+            font-size: 13px;
             border: 1px solid #334155;
             line-height: 1.6;
             margin-top: 15px;
@@ -86,6 +122,15 @@
 <div class="container">
     <h1>Gerador de Documentos de Escolas</h1>
 
+    <div class="instructions-box">
+        <h3>📋 Como preparar o seu arquivo Word:</h3>
+        <ul>
+            <li><strong>Termos exatos:</strong> O seu documento deve conter as palavras exatas para a substituição: <code>_escola</code>, <code>_rua</code>, <code>_numero</code>, <code>_bairro</code>, <code>_cep</code>, <code>_municipio</code>, <code>_cie</code>, <code>_email</code>, e <code>_telefone</code>.</li>
+            <li><strong>Cuidado com Hiperlinks:</strong> O Word transforma textos com underline automaticamente em links azuis. Se o <code>_email</code> ficar azul e sublinhado, <strong>clique com o botão direito nele e escolha "Remover Hiperlink"</strong>. Ele deve ficar com formato de texto normal.</li>
+            <li><strong>Digite tudo de uma vez:</strong> Se você digitar, apagar uma letra e digitar de novo no meio do termo (ex: <code>_es</code>... apaga ...<code>cola</code>), o Word quebra a palavra internamente e o sistema não a encontra. O ideal é digitar a palavra inteira de forma corrida ou colar sem formatação.</li>
+        </ul>
+    </div>
+
     <div class="step">
         <h2>Passo 1: Carregar Modelo Word (.docx)</h2>
         <input type="file" id="templateInput" accept=".docx">
@@ -93,7 +138,7 @@
 
     <div class="step">
         <h2>Passo 2: Processar e Baixar .ZIP</h2>
-        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Os dados das 25 escolas já estão salvos como Array (vetor) nativo no código, com a correção do e-mail e dos números vazios.</p>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Os dados das 25 escolas já estão salvos internamente. Escolas sem número terão o texto "Sem número" aplicado automaticamente.</p>
         <button id="btnZip">📦 Criar Pastas e Baixar .ZIP</button>
     </div>
 
@@ -166,10 +211,7 @@
                 for (const placeholder in schoolData) {
                     const cleanValue = escapeXml(schoolData[placeholder]);
                     
-                    // SOLUÇÃO ROBUSTA PARA O PROBLEMA DO "_email":
-                    // O Word costuma quebrar variáveis ao meio no XML por causa de corretores ou links.
-                    // Esta RegEx permite que tags XML (<w:t>, <w:r>, etc) existam entre as letras da variável,
-                    // reconstruindo e forçando a substituição independentemente de formatações embutidas.
+                    // Regex para substituir ignorando tags XML que o Word insere no meio da palavra
                     const escapedKey = placeholder.split('').map(c => c.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'));
                     const regexStr = escapedKey.join('(?:<[^>]+>)*');
                     const regex = new RegExp(regexStr, 'g');
@@ -185,7 +227,7 @@
 
     document.getElementById('btnZip').addEventListener('click', async () => {
         if (!templateInput.files || templateInput.files.length === 0) {
-            alert('Erro: É necessário selecionar o modelo do Word no Passo 1.');
+            alert('Atenção: É necessário selecionar o modelo do Word no Passo 1.');
             log('Erro: Arquivo Word não fornecido.', true);
             return;
         }
@@ -203,20 +245,15 @@
                 
                 log(`✓ Processando doc para: ${schoolName}`);
 
-                // Injeta os dados da array modificando o XML profundamente
                 const customDocBlob = await modifyDocx(arrayBuffer, school);
-                
-                // Nome do arquivo de saída
                 const finalFileName = `Documento_${folderName}.docx`;
                 
-                // Cria a pasta no ZIP e coloca o arquivo .docx lá dentro
                 masterZip.folder(folderName).file(finalFileName, customDocBlob);
             }
 
             log('Compactando e gerando o download do arquivo .ZIP...');
             const compiledZipBlob = await masterZip.generateAsync({ type: 'blob' });
             
-            // Força o download do arquivo pro computador do usuário
             const downloadUrl = URL.createObjectURL(compiledZipBlob);
             const anchorElement = document.createElement('a');
             anchorElement.href = downloadUrl;
