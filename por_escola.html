@@ -1,1 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Documentos (.ZIP)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #1e3a8a;
+            margin-top: 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+        .instructions-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 5px solid #f59e0b;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            color: #451a03;
+        }
+        .instructions-box h3 {
+            margin-top: 0;
+            color: #b45309;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .instructions-box ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        .instructions-box li {
+            margin-bottom: 8px;
+        }
+        .instructions-box code {
+            background-color: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #b45309;
+            font-size: 0.9em;
+        }
+        
+        .step {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background-color: #f1f5f9;
+        }
+        .step h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: #3b82f6;
+        }
+        input[type="file"], input[type="text"] {
+            display: block;
+            margin-top: 15px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #334155;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        button {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+        button:hover {
+            background-color: #059669;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #log {
+            background-color: #0f172a;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 6px;
+            height: 180px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            border: 1px solid #334155;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
 
+<div class="container">
+    <h1>Gerador de Documentos de Escolas</h1>
+
+    <div class="instructions-box">
+        <h3>📋 Como preparar o seu arquivo Word:</h3>
+        <ul>
+            <li><strong>Termos exatos:</strong> O seu documento deve conter as palavras exatas para a substituição: <code>_escola</code>, <code>_rua</code>, <code>_numero</code>, <code>_bairro</code>, <code>_cep</code>, <code>_municipio</code>, <code>_cie</code>, <code>_email</code>, e <code>_telefone</code>.</li>
+            <li><strong>Cuidado com Hiperlinks:</strong> O Word transforma textos com underline automaticamente em links azuis. Se o <code>_email</code> ficar azul e sublinhado, <strong>clique com o botão direito nele e escolha "Remover Hiperlink"</strong>.</li>
+            <li><strong>Digite tudo de uma vez:</strong> O ideal é digitar a palavra inteira de forma corrida no Word, sem apagar letras no meio ou mudar a formatação de apenas metade da palavra, para que o Word não a fragmente internamente.</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h2>Passo 1: Carregar Modelo Word (.docx)</h2>
+        <input type="file" id="templateInput" accept=".docx">
+    </div>
+
+    <div class="step">
+        <h2>Passo 2: Nome do Arquivo</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Digite como você quer que os documentos se chamem (ex: <em>Oficio_Circular</em>, <em>Aviso</em>). O sistema adicionará o nome da escola na frente automaticamente.</p>
+        <input type="text" id="customFileName" value="Documento" placeholder="Ex: Oficio_Diretoria">
+    </div>
+
+    <div class="step">
+        <h2>Passo 3: Processar e Baixar .ZIP</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Os dados das 25 escolas já estão salvos internamente. Escolas sem número terão o texto "Sem número" aplicado automaticamente.</p>
+        <button id="btnZip">📦 Criar Pastas e Baixar .ZIP</button>
+    </div>
+
+    <div id="log">Sistema pronto. Aguardando arquivo...</div>
+</div>
+
+<script>
+    const logDiv = document.getElementById('log');
+    const templateInput = document.getElementById('templateInput');
+    const customFileNameInput = document.getElementById('customFileName');
+
+    function log(message, isError = false) {
+        const time = new Date().toLocaleTimeString();
+        const style = isError ? 'color: #f87171;' : '';
+        logDiv.innerHTML += `<div style="${style}">[${time}] ${message}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function sanitizePathName(name) {
+        return name.replace(/[\/\\:*?"<>|]/g, '_').trim();
+    }
+
+    function escapeXml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe.toString().replace(/[<>&'"]/g, function (c) {
+            switch (c) {
+                case '<': return '&lt;'; case '>': return '&gt;';
+                case '&': return '&amp;'; case '\'': return '&apos;';
+                case '"': return '&quot;';
+            }
+        });
+    }
+
+    // LISTA SALVA DIRETAMENTE COMO ARRAY DE OBJETOS
+    const escolasArray = [
+        { _escola: "E.E. Paulo Delicio", _rua: "Rua Pedro Dias", _numero: "146", _bairro: "Centro", _cep: "18770-000", _municipio: "Águas de Santa Bárbara", _cie: "14515", _email: "e014515a@educacao.sp.gov.br", _telefone: "(14) 3765-1193" },
+        { _escola: "E.E. Pedro Bento Alves", _rua: "Rua João Batista Pereira", _numero: "603", _bairro: "Centro", _cep: "18710-000", _municipio: "Arandu", _cie: "14503", _email: "e014503a@educacao.sp.gov.br", _telefone: "(14) 3766-1140" },
+        { _escola: "E.E. Dona Bene Andrade", _rua: "Avenida Paranapanema", _numero: "150", _bairro: "Braz II", _cep: "18701-240", _municipio: "Avaré", _cie: "14631", _email: "e014631a@educacao.sp.gov.br", _telefone: "(14) 3732-2569 / 3732-7474" },
+        { _escola: "CEEJA Conceição Aparecida Ferreira Doni", _rua: "Av. Prefeito Misael Eufrásio Leal", _numero: "857", _bairro: "Centro", _cep: "18705-050", _municipio: "Avaré", _cie: "497277", _email: "e497277a@educacao.sp.gov.br", _telefone: "(14) 3732-7382 / 3733-9832" },
+        { _escola: "E.E. Prof. Celso Ferreira da Silva", _rua: "Rua Manoel dos Santos Callado", _numero: "207", _bairro: "Conj. Hab. Dr. Antonio Francisco Ino", _cep: "18708-800", _municipio: "Avaré", _cie: "918489", _email: "e918489a@educacao.sp.gov.br", _telefone: "(14) 3732-2322 / 3733-7666" },
+        { _escola: "E.E. Dona Cota Leonel", _rua: "Rua Antonieta Paulucci", _numero: "533", _bairro: "Alto da Boa Vista", _cep: "18708-320", _municipio: "Avaré", _cie: "905185", _email: "e905185a@educacao.sp.gov.br", _telefone: "(14) 3732-3676 / 3732-6690" },
+        { _escola: "E.E. Pe. Emílio Immoos", _rua: "Avenida Paranapanema", _numero: "1211", _bairro: "Parque Santa Elizabeth", _cep: "18702-000", _municipio: "Avaré", _cie: "45226", _email: "e045226a@educacao.sp.gov.br", _telefone: "(14) 3732-3606 / 3733-7383" },
+        { _escola: "E.E. Prof. Eruce Paulucci", _rua: "Rua Professor Amorim", _numero: "950", _bairro: "Vila Martins III", _cep: "18702-364", _municipio: "Avaré", _cie: "914484", _email: "e914484a@educacao.sp.gov.br", _telefone: "(14) 3732-1777" },
+        { _escola: "E.E. Cel. João Cruz", _rua: "Av. Prefeito Paulo Novaes", _numero: "871", _bairro: "Centro", _cep: "18705-000", _municipio: "Avaré", _cie: "14497", _email: "e014497a@educacao.sp.gov.br", _telefone: "(14) 3732-0171 / 3732-5001" },
+        { _escola: "E.E. Prof. João Teixeira de Araújo", _rua: "Rua Antonio Goncalves Guerra", _numero: "333", _bairro: "Brabancia", _cep: "18704-410", _municipio: "Avaré", _cie: "14588", _email: "e014588a@educacao.sp.gov.br", _telefone: "(14) 3732-0677 / 3732-4401" },
+        { _escola: "E.E. Dona Maria Izabel Cruz Pimentel", _rua: "Rua Coronel João Cruz", _numero: "787", _bairro: "Braz", _cep: "18701-260", _municipio: "Avaré", _cie: "38908", _email: "e038908a@educacao.sp.gov.br", _telefone: "(14) 3732-0576 / 3733-8120" },
+        { _escola: "E.E. Matilde Vieira", _rua: "Praça Coronel Edmundo Trench", _numero: "104", _bairro: "Centro", _cep: "18701-053", _municipio: "Avaré", _cie: "14679", _email: "e014679a@educacao.sp.gov.br", _telefone: "(14) 3732-0108 / 3733-7867" },
+        { _escola: "E.E. Dr. Paulo Araújo Novaes", _rua: "Rua José Eufrásio Leal", _numero: "46", _bairro: "Água Branca", _cep: "18700-300", _municipio: "Avaré", _cie: "14461", _email: "e014461a@educacao.sp.gov.br", _telefone: "(14) 3732-0925" },
+        { _escola: "E.E. Prof. José Leite Pinheiro", _rua: "Praca Manoel Soares Nogueira", _numero: "2", _bairro: "Vila Angelica", _cep: "18760-000", _municipio: "Cerqueira César", _cie: "14527", _email: "e014527a@educacao.sp.gov.br", _telefone: "(14) 3714-1272" },
+        { _escola: "E.E. Prof.ª Mariana Aparecida Todescatto", _rua: "Alameda das Tipuanas", _numero: "49-105", _bairro: "Recanto dos Pássaros", _cep: "18760-000", _municipio: "Cerqueira César", _cie: "191516", _email: "e191516a@educacao.sp.gov.br", _telefone: "(14) 3714-3485" },
+        { _escola: "E.E. Assentamento Zumbi dos Palmares", _rua: "Av. Área Rural", _numero: "Sem número", _bairro: "Área rural", _cep: "18779-899", _municipio: "Iaras", _cie: "566032", _email: "e566032a@educacao.sp.gov.br", _telefone: "(14) 3764-1162" },
+        { _escola: "E.E. Dr. Avelino Aparecido Ribeiro", _rua: "Praça Monção", _numero: "493", _bairro: "Centro", _cep: "18775-000", _municipio: "Iaras", _cie: "14552", _email: "e014552a@educacao.sp.gov.br", _telefone: "(14) 3764-1116" },
+        { _escola: "E.E. Abílio Raposo Ferraz Junior", _rua: "Rua Pedro Villen", _numero: "5", _bairro: "Jardim Brasil", _cep: "18730-000", _municipio: "Itaí", _cie: "903188", _email: "e903188a@educacao.sp.gov.br", _telefone: "(14) 3761-1155" },
+        { _escola: "E.E. João Michelin", _rua: "Rua Manoel Joaquim Garcia", _numero: "5", _bairro: "Centro", _cep: "18730-000", _municipio: "Itaí", _cie: "14485", _email: "e014485a@educacao.sp.gov.br", _telefone: "(14) 3761-1447" },
+        { _escola: "E.E. Prof.ª Sandra Aparecida de Araújo", _rua: "Rodrigo D. Valin", _numero: "485", _bairro: "Jd. Brasil", _cep: "18730-000", _municipio: "Itaí", _cie: "924337", _email: "e924337a@educacao.sp.gov.br", _telefone: "(14) 3761-3300 / 3761-3231" },
+        { _escola: "E.E. Prof. Dimas Mozart e Silva", _rua: "Manoel Joaquim Mendes", _numero: "661", _bairro: "Vila São Vicente", _cep: "18740-000", _municipio: "Taquarituba", _cie: "900424", _email: "e900424a@educacao.sp.gov.br", _telefone: "(14) 3762-1818" },
+        { _escola: "E.E. Prof. Guido Dias de Almeida", _rua: "Maria Magdalena Gabriel", _numero: "115", _bairro: "Jardim Treze de Maio", _cep: "18740-059", _municipio: "Taquarituba", _cie: "910119", _email: "e910119a@educacao.sp.gov.br", _telefone: "(14) 3762-2481 / 3762-2333" },
+        { _escola: "E.E. Prof. José Ap. Castelucci", _rua: "Rua José Maria Tomazi", _numero: "Sem número", _bairro: "Bairro dos Aleixos", _cep: "18740-000", _municipio: "Taquarituba", _cie: "49888", _email: "e049888a@educacao.sp.gov.br", _telefone: "(14) 3762-2122" },
+        { _escola: "E.E. José Penna", _rua: "Rua 24 de Dezembro", _numero: "559", _bairro: "Jardim Bela Vista", _cep: "18740-000", _municipio: "Taquarituba", _cie: "14540", _email: "e014540a@educacao.sp.gov.br", _telefone: "(14) 3762-1603" },
+        { _escola: "E.E. Dr. José Pires de Carvalho", _rua: "Pedro Silva", _numero: "190", _bairro: "Vila Sta. Rita de Cássia", _cep: "18740-000", _municipio: "Taquarituba", _cie: "924088", _email: "e924088a@educacao.sp.gov.br", _telefone: "(14) 3762-2844" }
+    ];
+
+    async function modifyDocx(templateBuffer, schoolData) {
+        const zip = await JSZip.loadAsync(templateBuffer);
+        const filePaths = Object.keys(zip.files);
+
+        for (const path of filePaths) {
+            if (path.startsWith('word/') && path.endsWith('.xml')) {
+                let textXml = await zip.file(path).async('text');
+                
+                for (const placeholder in schoolData) {
+                    const cleanValue = escapeXml(schoolData[placeholder]);
+                    
+                    // Regex para substituir ignorando tags XML que o Word insere no meio da palavra
+                    const escapedKey = placeholder.split('').map(c => c.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'));
+                    const regexStr = escapedKey.join('(?:<[^>]+>)*');
+                    const regex = new RegExp(regexStr, 'g');
+                    
+                    textXml = textXml.replace(regex, cleanValue);
+                }
+                
+                zip.file(path, textXml);
+            }
+        }
+        return await zip.generateAsync({ type: 'blob' });
+    }
+
+    document.getElementById('btnZip').addEventListener('click', async () => {
+        if (!templateInput.files || templateInput.files.length === 0) {
+            alert('Atenção: É necessário selecionar o modelo do Word no Passo 1.');
+            log('Erro: Arquivo Word não fornecido.', true);
+            return;
+        }
+
+        try {
+            log(`Iniciando o empacotamento em lote de ${escolasArray.length} escolas...`);
+            
+            const baseFile = templateInput.files[0];
+            const arrayBuffer = await baseFile.arrayBuffer();
+            const masterZip = new JSZip();
+
+            // Pega o nome digitado na caixa de texto. Se estiver vazio, usa "Documento"
+            let userFileName = customFileNameInput.value.trim();
+            if (userFileName === "") {
+                userFileName = "Documento";
+            }
+            // Remove caracteres que não podem virar nome de arquivo no Windows
+            userFileName = sanitizePathName(userFileName);
+
+            for (const school of escolasArray) {
+                const schoolName = school['_escola'];
+                const folderName = sanitizePathName(schoolName);
+                
+                log(`✓ Processando doc para: ${schoolName}`);
+
+                const customDocBlob = await modifyDocx(arrayBuffer, school);
+                
+                // Nome final: "NomeDigitado_NomeDaEscola.docx"
+                const finalFileName = `${userFileName}_${folderName}.docx`;
+                
+                masterZip.folder(folderName).file(finalFileName, customDocBlob);
+            }
+
+            log('Compactando e gerando o download do arquivo .ZIP...');
+            const compiledZipBlob = await masterZip.generateAsync({ type: 'blob' });
+            
+            const downloadUrl = URL.createObjectURL(compiledZipBlob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = downloadUrl;
+            anchorElement.download = 'Pacote_Escolas.zip';
+            document.body.appendChild(anchorElement);
+            anchorElement.click();
+            
+            document.body.removeChild(anchorElement);
+            URL.revokeObjectURL(downloadUrl);
+
+            log('✨ Concluído! O arquivo ZIP deve estar nos seus downloads.');
+
+        } catch (error) {
+            log(`Falha grave no processamento: ${error.message}`, true);
+            console.error(error);
+        }
+    });
+</script>
+
+</body>
+</html>
