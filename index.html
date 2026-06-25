@@ -28,7 +28,6 @@
             font-size: 1.6rem;
             text-align: center;
         }
-        /* Estilo da nova caixa de instruções */
         .instructions-box {
             background-color: #fffbeb;
             border: 1px solid #fde68a;
@@ -76,11 +75,24 @@
             font-size: 1.1rem;
             color: #3b82f6;
         }
-        input[type="file"] {
+        input[type="file"], input[type="text"] {
             display: block;
             margin-top: 15px;
             font-size: 1rem;
             width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #334155;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
         button {
             background-color: #10b981;
@@ -126,8 +138,8 @@
         <h3>📋 Como preparar o seu arquivo Word:</h3>
         <ul>
             <li><strong>Termos exatos:</strong> O seu documento deve conter as palavras exatas para a substituição: <code>_escola</code>, <code>_rua</code>, <code>_numero</code>, <code>_bairro</code>, <code>_cep</code>, <code>_municipio</code>, <code>_cie</code>, <code>_email</code>, e <code>_telefone</code>.</li>
-            <li><strong>Cuidado com Hiperlinks:</strong> O Word transforma textos com underline automaticamente em links azuis. Se o <code>_email</code> ficar azul e sublinhado, <strong>clique com o botão direito nele e escolha "Remover Hiperlink"</strong>. Ele deve ficar com formato de texto normal.</li>
-            <li><strong>Digite tudo de uma vez:</strong> Se você digitar, apagar uma letra e digitar de novo no meio do termo (ex: <code>_es</code>... apaga ...<code>cola</code>), o Word quebra a palavra internamente e o sistema não a encontra. O ideal é digitar a palavra inteira de forma corrida ou colar sem formatação.</li>
+            <li><strong>Cuidado com Hiperlinks:</strong> O Word transforma textos com underline automaticamente em links azuis. Se o <code>_email</code> ficar azul e sublinhado, <strong>clique com o botão direito nele e escolha "Remover Hiperlink"</strong>.</li>
+            <li><strong>Digite tudo de uma vez:</strong> O ideal é digitar a palavra inteira de forma corrida no Word, sem apagar letras no meio ou mudar a formatação de apenas metade da palavra, para que o Word não a fragmente internamente.</li>
         </ul>
     </div>
 
@@ -137,7 +149,13 @@
     </div>
 
     <div class="step">
-        <h2>Passo 2: Processar e Baixar .ZIP</h2>
+        <h2>Passo 2: Nome do Arquivo</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Digite como você quer que os documentos se chamem (ex: <em>Oficio_Circular</em>, <em>Aviso</em>). O sistema adicionará o nome da escola na frente automaticamente.</p>
+        <input type="text" id="customFileName" value="Documento" placeholder="Ex: Oficio_Diretoria">
+    </div>
+
+    <div class="step">
+        <h2>Passo 3: Processar e Baixar .ZIP</h2>
         <p style="font-size: 0.9rem; color: #64748b; margin-top: 0;">Os dados das 25 escolas já estão salvos internamente. Escolas sem número terão o texto "Sem número" aplicado automaticamente.</p>
         <button id="btnZip">📦 Criar Pastas e Baixar .ZIP</button>
     </div>
@@ -148,6 +166,7 @@
 <script>
     const logDiv = document.getElementById('log');
     const templateInput = document.getElementById('templateInput');
+    const customFileNameInput = document.getElementById('customFileName');
 
     function log(message, isError = false) {
         const time = new Date().toLocaleTimeString();
@@ -239,6 +258,14 @@
             const arrayBuffer = await baseFile.arrayBuffer();
             const masterZip = new JSZip();
 
+            // Pega o nome digitado na caixa de texto. Se estiver vazio, usa "Documento"
+            let userFileName = customFileNameInput.value.trim();
+            if (userFileName === "") {
+                userFileName = "Documento";
+            }
+            // Remove caracteres que não podem virar nome de arquivo no Windows
+            userFileName = sanitizePathName(userFileName);
+
             for (const school of escolasArray) {
                 const schoolName = school['_escola'];
                 const folderName = sanitizePathName(schoolName);
@@ -246,7 +273,9 @@
                 log(`✓ Processando doc para: ${schoolName}`);
 
                 const customDocBlob = await modifyDocx(arrayBuffer, school);
-                const finalFileName = `Documento_${folderName}.docx`;
+                
+                // Nome final: "NomeDigitado_NomeDaEscola.docx"
+                const finalFileName = `${userFileName}_${folderName}.docx`;
                 
                 masterZip.folder(folderName).file(finalFileName, customDocBlob);
             }
