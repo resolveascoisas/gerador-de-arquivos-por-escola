@@ -167,7 +167,7 @@
             <li><strong>Na Planilha (.xlsx ou .csv):</strong> Sua planilha <strong>deve ter um cabeçalho na primeira linha</strong>. Os nomes das colunas devem ser exatamente <code>_escola</code>, <code>_aluno</code> e <code>_turma</code>.</li>
             <li><strong>Nome da Escola:</strong> O nome da escola na coluna <code>_escola</code> da planilha deve estar escrito <strong>exatamente igual</strong> ao cadastrado no sistema (ex: <em>E.E. Paulo Delicio</em>) para que ele consiga puxar o endereço, telefone, etc.</li>
         </ul>
-        <a href="#" id="btnBaixarPlanilha" class="download-link">📥 Clique aqui para baixar a Planilha Padrão de Exemplo</a>
+        <a href="planilha_padrao.xlsx" download="planilha_padrao.xlsx" class="download-link">📥 Clique aqui para baixar a Planilha Padrão de Exemplo</a>
     </div>
 
     <div class="step">
@@ -208,31 +208,6 @@
 
     let alunosProcessados = [];
     let possuiTurma = false;
-
-    // GERADOR DA PLANILHA DE EXEMPLO
-    document.getElementById('btnBaixarPlanilha').addEventListener('click', (e) => {
-        e.preventDefault();
-        try {
-            // Cria os dados de exemplo
-            const ws_data = [
-                ["_escola", "_aluno", "_turma"],
-                ["E.E. Paulo Delicio", "João Pedro da Silva", "9º Ano A"],
-                ["E.E. Paulo Delicio", "Ana Clara Oliveira", "9º Ano A"],
-                ["E.E. Matilde Vieira", "Carlos Eduardo Souza", "1º Colegial B"],
-                ["E.E. Matilde Vieira", "Fernanda Lima (Sem turma definida)", ""]
-            ];
-            
-            // Converte e cria o arquivo Excel usando o SheetJS
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Alunos");
-            XLSX.writeFile(wb, "planilha_padrao.xlsx");
-            
-            log('Planilha de exemplo gerada e baixada com sucesso!', 'success');
-        } catch (error) {
-            log('Erro ao gerar planilha de exemplo: ' + error.message, 'error');
-        }
-    });
 
     // BANCO DE DADOS DAS ESCOLAS (Fixo)
     const escolasArray = [
